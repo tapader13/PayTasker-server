@@ -26,7 +26,11 @@ async function run() {
     );
     const microDB = client.db('microDB');
     const usersCollection = microDB.collection('users');
-
+    app.get('/users/:email', async (req, res) => {
+      const email = req.params.email;
+      const result = await usersCollection.findOne({ email: email });
+      res.send(result);
+    });
     app.post('/users', async (req, res) => {
       try {
         const user = await usersCollection.findOne({ email: req.body.email });
@@ -50,9 +54,24 @@ async function run() {
         });
       }
     });
+    app.post('/jwt', async (req, res) => {
+      console.log(req.body?.email);
+      const token = jwt.sign(
+        { email: req.body?.email },
+        process.env.ACCESS_TOKEN_SECRET,
+        {
+          expiresIn: '1h',
+        }
+      );
+      res.send({
+        success: true,
+        token,
+        message: 'JWT token generated successfully',
+      });
+    });
   } finally {
     // Ensures that the client will close when you finish/error
-    await client.close();
+    // await client.close();
   }
 }
 run().catch(console.dir);
