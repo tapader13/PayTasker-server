@@ -3,6 +3,7 @@ const express = require('express');
 const app = express();
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 app.use(cors());
 app.use(express.json());
@@ -41,6 +42,7 @@ async function run() {
     const microDB = client.db('microDB');
     const usersCollection = microDB.collection('users');
     const tasksCollection = microDB.collection('tasks');
+    const paymentCollection = microDB.collection('payment');
     const verifyBuyer = async (req, res, next) => {
       const email = req.decoded.email;
       console.log(email, 'buyer');
@@ -208,7 +210,7 @@ async function run() {
         });
       }
     });
-    app.post('/create-payment-intent', async (req, res) => {
+    app.post('/create-payment-intent', verifyToken, async (req, res) => {
       const { price } = req.body;
       const amount = parseInt(price * 100);
       console.log(req.body, 123);
@@ -222,6 +224,37 @@ async function run() {
       res.send({
         clientSecret: paymentIntent.client_secret,
       });
+    });
+    app.post('/payment', verifyToken, async (req, res) => {
+      try {
+        const payment = req.body;
+        console.log(payment);
+        const result = await paymentCollection.insertOne(payment);
+        if (result.insertedId) {
+          const user = await usersCollection.findOne({
+            email: req.body.email,
+          });
+          const newBalance = user.coins + req.body.coins;
+          await usersCollection.updateOne(
+            { email: req.body.email },
+            {
+              $set: {
+                coins: newBalance,
+              },
+            }
+          );
+          res.send({
+            success: true,
+            data: result,
+            message: 'payment added successfully',
+          });
+        }
+      } catch (error) {
+        res.status(500).send({
+          success: false,
+          message: 'error while adding payment',
+        });
+      }
     });
   } finally {
     // Ensures that the client will close when you finish/error
