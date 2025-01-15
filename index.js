@@ -3,7 +3,7 @@ const express = require('express');
 const app = express();
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 app.use(cors());
 app.use(express.json());
 
@@ -132,6 +132,45 @@ async function run() {
         res.status(500).send({
           success: false,
           message: 'error while adding task item',
+        });
+      }
+    });
+    app.get('/tasks', verifyToken, verifyBuyer, async (req, res) => {
+      try {
+        const result = await tasksCollection
+          .find({ buyerEmail: req.decoded.email })
+          .toArray();
+        res.status(200).send({
+          success: true,
+          data: result,
+          message: 'task items fetched successfully',
+        });
+      } catch (error) {
+        console.log(error);
+        res.status(500).send({
+          success: false,
+          message: 'error while getting task items',
+        });
+      }
+    });
+    app.put('/tasks/:id', verifyToken, verifyBuyer, async (req, res) => {
+      try {
+        const id = req.params.id;
+        const filter = { _id: new ObjectId(id) };
+
+        const result = await tasksCollection.updateOne(filter, {
+          $set: req.body,
+        });
+        res.status(200).send({
+          success: true,
+          data: result,
+          message: 'task item updated successfully',
+        });
+      } catch (error) {
+        console.log(error);
+        res.status(500).send({
+          success: false,
+          message: 'error while updating task item',
         });
       }
     });
