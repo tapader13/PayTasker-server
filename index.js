@@ -290,6 +290,55 @@ async function run() {
         });
       }
     });
+    app.get('/tasks-worker', verifyToken, verifyWorker, async (req, res) => {
+      try {
+        const result = await tasksCollection
+          .aggregate([
+            {
+              $match: {
+                required_workers: { $gt: 0 },
+              },
+            },
+            {
+              $lookup: {
+                from: 'users',
+                localField: 'buyerEmail',
+                foreignField: 'email',
+                as: 'buyerInfo',
+              },
+            },
+            {
+              $unwind: '$buyerInfo',
+            },
+            {
+              $project: {
+                username: '$buyerInfo.name',
+                required_workers: '$required_workers',
+                payable_amount: '$payable_amount',
+                task_title: '$task_title',
+                task_detail: '$task_detail',
+                completion_date: '$completion_date',
+                submission_info: '$submission_info',
+                task_image_url: '$task_image_url',
+                buyerEmail: '$buyerEmail',
+              },
+            },
+          ])
+          .toArray();
+        console.log(result);
+        res.status(200).send({
+          success: true,
+          data: result,
+          message: 'task items fetched successfully',
+        });
+      } catch (error) {
+        console.log(error);
+        res.status(500).send({
+          success: false,
+          message: 'error while getting task items',
+        });
+      }
+    });
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
