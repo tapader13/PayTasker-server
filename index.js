@@ -14,7 +14,20 @@ const client = new MongoClient(process.env.DB_URI, {
     deprecationErrors: true,
   },
 });
-
+const verifyToken = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    return res.status(401).send({ message: 'unauthorized access' });
+  }
+  const token = authHeader.split(' ')[1];
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+    if (err) {
+      return res.status(403).send({ message: 'forbidden access' });
+    }
+    req.decoded = decoded;
+    next();
+  });
+};
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
@@ -68,6 +81,22 @@ async function run() {
         token,
         message: 'JWT token generated successfully',
       });
+    });
+    app.post('/tasks', verifyToken, verifyAdmin, async (req, res) => {
+      try {
+        const result = await menuCollection.insertOne(req.body);
+        res.status(201).send({
+          success: true,
+          data: result,
+          message: 'menu item added successfully',
+        });
+      } catch (error) {
+        console.log(error);
+        res.status(500).send({
+          success: false,
+          message: 'error while adding menu item',
+        });
+      }
     });
   } finally {
     // Ensures that the client will close when you finish/error
