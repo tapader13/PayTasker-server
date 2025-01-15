@@ -25,6 +25,7 @@ const verifyToken = (req, res, next) => {
       return res.status(403).send({ message: 'forbidden access' });
     }
     req.decoded = decoded;
+    console.log(req.decoded, 'verify token');
     next();
   });
 };
@@ -42,6 +43,7 @@ async function run() {
     const tasksCollection = microDB.collection('tasks');
     const verifyBuyer = async (req, res, next) => {
       const email = req.decoded.email;
+      console.log(email, 'buyer');
       const findBuyer = await usersCollection.findOne({ email: email });
       if (findBuyer) {
         const buyer = findBuyer.role === 'buyer';
@@ -103,10 +105,10 @@ async function run() {
           return res.status(403).send({ message: 'forbidden access' });
         }
         console.log(req.body);
-        // const result = await tasksCollection.insertOne(req.body);
+        const result = await tasksCollection.insertOne(req.body);
         res.status(201).send({
           success: true,
-          //   data: result,
+          data: result,
           message: 'task item added successfully',
         });
       } catch (error) {
