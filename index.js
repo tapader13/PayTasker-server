@@ -58,6 +58,21 @@ async function run() {
         return res.status(403).send({ message: 'forbidden access' });
       }
     };
+    const verifyWorker = async (req, res, next) => {
+      const email = req.decoded.email;
+      console.log(email, 'worker verified');
+      const findWorker = await usersCollection.findOne({ email: email });
+      if (findWorker) {
+        const worker = findWorker.role === 'worker';
+        if (worker) {
+          next();
+        } else {
+          return res.status(403).send({ message: 'forbidden access' });
+        }
+      } else {
+        return res.status(403).send({ message: 'forbidden access' });
+      }
+    };
     app.get('/users/:email', async (req, res) => {
       const email = req.params.email;
       const result = await usersCollection.findOne({ email: email });
