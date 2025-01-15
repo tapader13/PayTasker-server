@@ -39,6 +39,21 @@ async function run() {
     );
     const microDB = client.db('microDB');
     const usersCollection = microDB.collection('users');
+    const tasksCollection = microDB.collection('tasks');
+    const verifyBuyer = async (req, res, next) => {
+      const email = req.decoded.email;
+      const findBuyer = await usersCollection.findOne({ email: email });
+      if (findBuyer) {
+        const buyer = findBuyer.role === 'buyer';
+        if (buyer) {
+          next();
+        } else {
+          return res.status(403).send({ message: 'forbidden access' });
+        }
+      } else {
+        return res.status(403).send({ message: 'forbidden access' });
+      }
+    };
     app.get('/users/:email', async (req, res) => {
       const email = req.params.email;
       const result = await usersCollection.findOne({ email: email });
@@ -82,19 +97,23 @@ async function run() {
         message: 'JWT token generated successfully',
       });
     });
-    app.post('/tasks', verifyToken, verifyAdmin, async (req, res) => {
+    app.post('/tasks', verifyToken, verifyBuyer, async (req, res) => {
       try {
-        const result = await menuCollection.insertOne(req.body);
+        if (req.decoded?.email !== req.body?.buyerEmail) {
+          return res.status(403).send({ message: 'forbidden access' });
+        }
+        console.log(req.body);
+        // const result = await tasksCollection.insertOne(req.body);
         res.status(201).send({
           success: true,
-          data: result,
-          message: 'menu item added successfully',
+          //   data: result,
+          message: 'task item added successfully',
         });
       } catch (error) {
         console.log(error);
         res.status(500).send({
           success: false,
-          message: 'error while adding menu item',
+          message: 'error while adding task item',
         });
       }
     });
