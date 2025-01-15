@@ -106,6 +106,22 @@ async function run() {
         }
         console.log(req.body);
         const result = await tasksCollection.insertOne(req.body);
+        const user = await usersCollection.findOne({
+          email: req.body.buyerEmail,
+        });
+
+        if (result.insertedId && user) {
+          const totalCost = req.body.required_workers * req.body.payable_amount;
+          const newBalance = user.coins - totalCost;
+          await usersCollection.updateOne(
+            { email: req.body.buyerEmail },
+            {
+              $set: {
+                coins: newBalance,
+              },
+            }
+          );
+        }
         res.status(201).send({
           success: true,
           data: result,
