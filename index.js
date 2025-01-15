@@ -174,6 +174,40 @@ async function run() {
         });
       }
     });
+    app.delete('/tasks/:id', verifyToken, verifyBuyer, async (req, res) => {
+      try {
+        const id = req.params.id;
+        const filter = { _id: new ObjectId(id) };
+        const findTask = await tasksCollection.findOne(filter);
+        const result = await tasksCollection.deleteOne(filter);
+        if (result.deletedCount > 0) {
+          const user = await usersCollection.findOne({
+            email: req.decoded.email,
+          });
+          const newBalance =
+            user.coins + findTask.required_workers * findTask.payable_amount;
+          await usersCollection.updateOne(
+            { email: req.decoded.email },
+            {
+              $set: {
+                coins: newBalance,
+              },
+            }
+          );
+          res.status(200).send({
+            success: true,
+            data: result,
+            message: 'task item deleted successfully',
+          });
+        }
+      } catch (error) {
+        console.log(error);
+        res.status(500).send({
+          success: false,
+          message: 'error while deleting task item',
+        });
+      }
+    });
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
