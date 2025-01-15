@@ -256,6 +256,25 @@ async function run() {
         });
       }
     });
+    app.get('/payments-history', verifyToken, verifyBuyer, async (req, res) => {
+      try {
+        const result = await paymentCollection
+          .find({ email: req.decoded.email })
+          .toArray();
+        console.log(result);
+        res.status(200).send({
+          success: true,
+          data: result,
+          message: 'payment history fetched successfully',
+        });
+      } catch (error) {
+        console.log(error);
+        res.status(500).send({
+          success: false,
+          message: 'error while getting payment history',
+        });
+      }
+    });
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
