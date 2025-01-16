@@ -414,6 +414,30 @@ async function run() {
         }
       }
     );
+    app.get(
+      '/worker-submissions',
+      verifyToken,
+      verifyWorker,
+      async (req, res) => {
+        try {
+          const result = await submissionCollection
+            .find({ worker_email: req.decoded.email })
+            .toArray();
+          console.log(result);
+          res.status(200).send({
+            success: true,
+            data: result,
+            message: 'worker submissions fetched successfully',
+          });
+        } catch (error) {
+          console.log(error);
+          res.status(500).send({
+            success: false,
+            message: 'error while getting worker submissions',
+          });
+        }
+      }
+    );
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
