@@ -43,6 +43,7 @@ async function run() {
     const usersCollection = microDB.collection('users');
     const tasksCollection = microDB.collection('tasks');
     const paymentCollection = microDB.collection('payment');
+    const submissionCollection = microDB.collection('submission');
     const verifyBuyer = async (req, res, next) => {
       const email = req.decoded.email;
       console.log(email, 'buyer');
@@ -388,6 +389,27 @@ async function run() {
           res.status(500).send({
             success: false,
             message: 'error while getting task item',
+          });
+        }
+      }
+    );
+    app.post(
+      '/tasks-worker/submit',
+      verifyToken,
+      verifyWorker,
+      async (req, res) => {
+        try {
+          const result = await submissionCollection.insertOne(req.body);
+          res.status(200).send({
+            success: true,
+            data: result,
+            message: 'task submission added successfully',
+          });
+        } catch (error) {
+          console.log(error);
+          res.status(500).send({
+            success: false,
+            message: 'error while adding task submission',
           });
         }
       }
