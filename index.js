@@ -75,6 +75,21 @@ async function run() {
         return res.status(403).send({ message: 'forbidden access' });
       }
     };
+    const verifyAdmin = async (req, res, next) => {
+      const email = req.decoded.email;
+      console.log(email, 'admin verified');
+      const findAdmin = await usersCollection.findOne({ email: email });
+      if (findAdmin) {
+        const admin = findAdmin.role === 'admin';
+        if (admin) {
+          next();
+        } else {
+          return res.status(403).send({ message: 'forbidden access' });
+        }
+      } else {
+        return res.status(403).send({ message: 'forbidden access' });
+      }
+    };
     app.get('/users/:email', async (req, res) => {
       const email = req.params.email;
       const result = await usersCollection.findOne({ email: email });
@@ -460,6 +475,7 @@ async function run() {
         }
       }
     );
+    app.get('/admin-states', verifyToken, verifyAdmin, async (req, res) => {});
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
