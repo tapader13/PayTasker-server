@@ -44,6 +44,7 @@ async function run() {
     const tasksCollection = microDB.collection('tasks');
     const paymentCollection = microDB.collection('payment');
     const submissionCollection = microDB.collection('submission');
+    const withdrowCollection = microDB.collection('withdrow');
     const verifyBuyer = async (req, res, next) => {
       const email = req.decoded.email;
       console.log(email, 'buyer');
@@ -108,7 +109,7 @@ async function run() {
         { email: req.body?.email },
         process.env.ACCESS_TOKEN_SECRET,
         {
-          expiresIn: '1h',
+          expiresIn: '1d',
         }
       );
       res.send({
@@ -434,6 +435,27 @@ async function run() {
           res.status(500).send({
             success: false,
             message: 'error while getting worker submissions',
+          });
+        }
+      }
+    );
+    app.post(
+      '/worker-withdrawals',
+      verifyToken,
+      verifyWorker,
+      async (req, res) => {
+        try {
+          const result = await withdrowCollection.insertOne(req.body);
+          res.status(200).send({
+            success: true,
+            data: result,
+            message: 'worker withdrawal added successfully',
+          });
+        } catch (error) {
+          console.log(error);
+          res.status(500).send({
+            success: false,
+            message: 'error while adding worker withdrawal',
           });
         }
       }
