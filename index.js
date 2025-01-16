@@ -595,6 +595,59 @@ async function run() {
         });
       }
     });
+    app.patch(
+      '/role-update/:id',
+      verifyToken,
+      verifyAdmin,
+      async (req, res) => {
+        try {
+          const id = req.params.id;
+          const filter = { _id: new ObjectId(id) };
+          const updateDoc = {
+            $set: {
+              role: req.body.role,
+            },
+          };
+          const result = await usersCollection.updateOne(filter, updateDoc);
+          res.status(200).send({
+            success: true,
+            data: result,
+            message: 'user role updated successfully',
+          });
+        } catch (error) {
+          console.log(error);
+          res.status(500).send({
+            success: false,
+            message: 'error while updating user role',
+          });
+        }
+      }
+    );
+    app.delete(
+      '/users-delete/:id',
+      verifyToken,
+      verifyAdmin,
+      async (req, res) => {
+        try {
+          const id = req.params.id;
+          const filter = { _id: new ObjectId(id) };
+          const result = await usersCollection.deleteOne(filter);
+          if (result.deletedCount > 0) {
+            res.status(200).send({
+              success: true,
+              data: result,
+              message: 'user deleted successfully',
+            });
+          }
+        } catch (error) {
+          console.log(error);
+          res.status(500).send({
+            success: false,
+            message: 'error while deleting user',
+          });
+        }
+      }
+    );
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
