@@ -664,6 +664,30 @@ async function run() {
         });
       }
     });
+    app.delete(
+      '/tasks-manage/:id',
+      verifyToken,
+      verifyAdmin,
+      async (req, res) => {
+        try {
+          const deleteTask = await tasksCollection.findOneAndDelete({
+            _id: new ObjectId(req.params.id),
+          });
+          if (deleteTask.deletedCount > 0) {
+            res.status(200).send({
+              success: true,
+              data: deleteTask,
+              message: 'task deleted successfully',
+            });
+          }
+        } catch (error) {
+          res.status(500).send({
+            success: false,
+            message: 'error while deleting task',
+          });
+        }
+      }
+    );
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
