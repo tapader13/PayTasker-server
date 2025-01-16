@@ -579,6 +579,22 @@ async function run() {
         }
       }
     );
+    app.get('/manage-users', verifyToken, verifyAdmin, async (req, res) => {
+      try {
+        const result = await usersCollection.find().toArray();
+        res.status(200).send({
+          success: true,
+          data: result,
+          message: 'users fetched successfully',
+        });
+      } catch (error) {
+        console.log(error);
+        res.status(500).send({
+          success: false,
+          message: 'error while getting users',
+        });
+      }
+    });
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
