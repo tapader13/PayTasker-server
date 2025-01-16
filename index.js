@@ -475,7 +475,60 @@ async function run() {
         }
       }
     );
-    app.get('/admin-states', verifyToken, verifyAdmin, async (req, res) => {});
+    app.get('/admin-states', verifyToken, verifyAdmin, async (req, res) => {
+      try {
+        const totalWorkers = await usersCollection
+          .find({ role: 'worker' })
+          .count();
+        const totalBuyers = await usersCollection
+          .find({ role: 'buyer' })
+          .count();
+        const totalPayment = await paymentCollection
+          .aggregate([
+            {
+              $group: {
+                _id: null,
+                totalPrice: { $sum: '$price' },
+              },
+            },
+          ])
+          .toArray();
+        const totalcoins = await usersCollection
+          .aggregate([
+            {
+              $match: {
+                role: { $ne: 'admin' },
+              },
+            },
+            {
+              $group: {
+                _id: null,
+                totalCoins: { $sum: '$coins' },
+              },
+            },
+          ])
+          .toArray();
+        const totalAvailableCoins =
+          totalcoins.length > 0 ? totalcoins[0].totalCoins : 0;
+        const totalPayments =
+          totalPayment.length > 0 ? totalPayment[0].totalPrice : 0;
+        res.status(200).send({
+          success: true,
+          states: {
+            totalWorkers,
+            totalBuyers,
+            totalPayments,
+            totalAvailableCoins,
+          },
+          message: 'admin states fetched successfully',
+        });
+      } catch (error) {
+        res.status(500).send({
+          success: false,
+          message: 'error while getting admin states',
+        });
+      }
+    });
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
