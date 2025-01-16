@@ -512,6 +512,9 @@ async function run() {
           totalcoins.length > 0 ? totalcoins[0].totalCoins : 0;
         const totalPayments =
           totalPayment.length > 0 ? totalPayment[0].totalPrice : 0;
+        const witdrowRequest = await withdrowCollection
+          .find({ status: 'pending' })
+          .toArray();
         res.status(200).send({
           success: true,
           states: {
@@ -520,6 +523,7 @@ async function run() {
             totalPayments,
             totalAvailableCoins,
           },
+          withdrowReq: witdrowRequest,
           message: 'admin states fetched successfully',
         });
       } catch (error) {
