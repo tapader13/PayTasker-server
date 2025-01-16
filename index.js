@@ -533,6 +533,52 @@ async function run() {
         });
       }
     });
+    app.patch(
+      '/approve-withdrawal/:id',
+      verifyToken,
+      verifyAdmin,
+      async (req, res) => {
+        try {
+          const id = req.params.id;
+          console.log(req.body.coins);
+          const result = await withdrowCollection.updateOne(
+            { _id: new ObjectId(id) },
+            {
+              $set: {
+                status: 'approved',
+              },
+            }
+          );
+          if (result.modifiedCount > 0) {
+            const user = await usersCollection.findOne({
+              email: req.body.email,
+            });
+            const userCoins = user.coins;
+            const newCoins = userCoins - req.body.coins;
+            const updateCoins = await usersCollection.updateOne(
+              { email: req.body.email },
+              {
+                $set: {
+                  coins: newCoins,
+                },
+              }
+            );
+            if (updateCoins.modifiedCount > 0) {
+              res.status(200).send({
+                success: true,
+                data: result,
+                message: 'withdrawal approved successfully',
+              });
+            }
+          }
+        } catch (error) {
+          res.status(500).send({
+            success: false,
+            message: 'error while approving withdrawal',
+          });
+        }
+      }
+    );
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
