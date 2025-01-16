@@ -648,6 +648,22 @@ async function run() {
         }
       }
     );
+    app.get('/tasks-manage', verifyToken, verifyAdmin, async (req, res) => {
+      try {
+        const result = await tasksCollection.find().toArray();
+        res.status(200).send({
+          success: true,
+          data: result,
+          message: 'tasks fetched successfully',
+        });
+      } catch (error) {
+        console.log(error);
+        res.status(500).send({
+          success: false,
+          message: 'error while getting tasks',
+        });
+      }
+    });
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
