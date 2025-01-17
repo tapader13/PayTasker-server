@@ -733,7 +733,7 @@ async function run() {
           totalPendingTasks.length > 0 ? totalPendingTasks[0].pendingTasks : 0;
         const submissionPendingTasks = await submissionCollection
           .find({
-            buyer_email: 'tofazzal@gmail.com',
+            buyer_email: req.decoded.email,
             status: 'pending',
           })
           .toArray();
@@ -864,6 +864,73 @@ async function run() {
         }
       }
     );
+    app.get('/worker-states', verifyToken, verifyWorker, async (req, res) => {
+      try {
+        const totalSubmitCount = await submissionCollection.countDocuments({
+          worker_email: req.decoded.email,
+        });
+        const totalPendingSubmit = await submissionPendingTasks
+          .aggregate([
+            {
+              $match: {
+                worker_email: req.decoded.email,
+                status: 'pending',
+              },
+            },
+            {
+              $group: {
+                _id: null,
+                pendingSubmit: { $sum: 1 },
+              },
+            },
+          ])
+          .toArray();
+        const pendinSubmitCount =
+          totalPendingSubmit.length > 0
+            ? totalPendingSubmit[0].pendingSubmit
+            : 0;
+        const submissionPendingSubmit = await submissionCollection
+          .find({
+            worker_email: req.decoded.email,
+            status: 'approve',
+          })
+          .toArray();
+        const totalEarning = await submissionCollection
+          .aggregate([
+            {
+              $match: {
+                worker_email: req.decoded.email,
+                status: 'approve',
+              },
+            },
+            {
+              $group: {
+                _id: null,
+                payment: { $sum: '$payable_amount' },
+              },
+            },
+          ])
+          .toArray();
+        const totalPayment =
+          totalEarning.length > 0 ? totalEarning[0].payment : 0;
+        res.status(200).send({
+          success: true,
+          states: {
+            totalSubmitCount,
+            pendingSubmit: submissionPendingTasks,
+            totalPayment,
+          },
+          submissions: submissionPendingSubmit,
+          message: 'buyer states fetched successfully',
+        });
+      } catch (error) {
+        console.log(error);
+        res.status(500).send({
+          success: false,
+          message: 'error while fetching buyer states',
+        });
+      }
+    });
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
