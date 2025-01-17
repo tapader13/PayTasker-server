@@ -737,12 +737,30 @@ async function run() {
             status: 'pending',
           })
           .toArray();
+        const totalPayByBuyer = await submissionCollection
+          .aggregate([
+            {
+              $match: {
+                buyer_email: req.decoded.email,
+                status: 'approve',
+              },
+            },
+            {
+              $group: {
+                _id: null,
+                payment: { $sum: '$payable_amount' },
+              },
+            },
+          ])
+          .toArray();
+        const totalPayment =
+          totalPayByBuyer.length > 0 ? totalPayByBuyer[0].payment : 0;
         res.status(200).send({
           success: true,
           states: {
             totalTaskCount,
             pendingTasks: pendinTaskCount,
-            totalPayment: 100, //todo for next update
+            totalPayment,
           },
           submissions: submissionPendingTasks,
           message: 'buyer states fetched successfully',
