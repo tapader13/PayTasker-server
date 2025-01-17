@@ -45,6 +45,7 @@ async function run() {
     const paymentCollection = microDB.collection('payment');
     const submissionCollection = microDB.collection('submission');
     const withdrowCollection = microDB.collection('withdrow');
+    const notificationCollection = microDB.collection('notification');
     const verifyBuyer = async (req, res, next) => {
       const email = req.decoded.email;
       console.log(email, 'buyer');
@@ -688,6 +689,25 @@ async function run() {
         }
       }
     );
+    app.get('/best-workers', async (req, res) => {
+      try {
+        const result = await usersCollection
+          .find({ role: 'worker' })
+          .sort({ coins: -1 })
+          .limit(6)
+          .toArray();
+        res.status(200).send({
+          success: true,
+          data: result,
+          message: 'best workers fetched successfully',
+        });
+      } catch (error) {
+        res.status(500).send({
+          success: false,
+          message: 'error while fetching best workers',
+        });
+      }
+    });
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
