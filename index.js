@@ -801,51 +801,51 @@ async function run() {
         }
       }
     );
-    // app.patch(
-    //   '/reject-submission',
-    //   verifyToken,
-    //   verifyBuyer,
-    //   async (req, res) => {
-    //     try {
-    //       const submission = await submissionCollection.findOneAndUpdate(
-    //         { _id: new ObjectId(req.body.id) },
-    //         {
-    //           $set: {
-    //             status: 'rejected',
-    //           },
-    //         },
-    //         { returnDocument: 'after' }
-    //       );
-    //       if (submission.status === 'rejected') {
-    //         const tasks = await tasksCollection.findOne({
-    //           _id: new ObjectId(submission.task_id),
-    //         });
-    //         if (tasks) {
-    //           const remainingWorkers = tasks.required_workers + 1;
-    //           await tasksCollection.updateOne(
-    //             { _id: new ObjectId(submission.task_id) },
-    //             {
-    //               $set: {
-    //                 required_workers: remainingWorkers,
-    //               },
-    //             }
-    //           );
-    //           res.status(200).send({
-    //             success: true,
-    //             data: submission,
-    //             message: 'submission rejected successfully',
-    //           });
-    //         }
-    //       }
-    //     } catch (error) {
-    //       console.log(error);
-    //       res.status(500).send({
-    //         success: false,
-    //         message: 'error while rejecting submission',
-    //       });
-    //     }
-    //   }
-    // );
+    app.patch(
+      '/reject-submission',
+      verifyToken,
+      verifyBuyer,
+      async (req, res) => {
+        try {
+          const submission = await submissionCollection.findOneAndUpdate(
+            { _id: new ObjectId(req.body.id) },
+            {
+              $set: {
+                status: 'rejected',
+              },
+            },
+            { returnDocument: 'after' }
+          );
+          if (submission.status === 'rejected') {
+            const tasks = await tasksCollection.findOne({
+              _id: new ObjectId(submission.task_id),
+            });
+            if (tasks) {
+              const remainingWorkers = tasks.required_workers + 1;
+              await tasksCollection.updateOne(
+                { _id: new ObjectId(submission.task_id) },
+                {
+                  $set: {
+                    required_workers: remainingWorkers,
+                  },
+                }
+              );
+              res.status(200).send({
+                success: true,
+                data: submission,
+                message: 'submission rejected successfully',
+              });
+            }
+          }
+        } catch (error) {
+          console.log(error);
+          res.status(500).send({
+            success: false,
+            message: 'error while rejecting submission',
+          });
+        }
+      }
+    );
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
