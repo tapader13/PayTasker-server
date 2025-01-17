@@ -708,6 +708,144 @@ async function run() {
         });
       }
     });
+    //a lot of toto work here should be done
+    app.get('/buyer-states', verifyToken, verifyBuyer, async (req, res) => {
+      try {
+        const totalTaskCount = await tasksCollection.countDocuments({
+          buyerEmail: req.decoded.email,
+        });
+        const totalPendingTasks = await tasksCollection
+          .aggregate([
+            {
+              $match: {
+                buyerEmail: req.decoded.email,
+              },
+            },
+            {
+              $group: {
+                _id: null,
+                pendingTasks: { $sum: '$required_workers' },
+              },
+            },
+          ])
+          .toArray();
+        const pendinTaskCount =
+          totalPendingTasks.length > 0 ? totalPendingTasks[0].pendingTasks : 0;
+        const submissionPendingTasks = await submissionCollection
+          .find({
+            buyer_email: 'tofazzal@gmail.com',
+            status: 'pending',
+          })
+          .toArray();
+        res.status(200).send({
+          success: true,
+          states: {
+            totalTaskCount,
+            pendingTasks: pendinTaskCount,
+            totalPayment: 100, //todo for next update
+          },
+          submissions: submissionPendingTasks,
+          message: 'buyer states fetched successfully',
+        });
+      } catch (error) {
+        console.log(error);
+        res.status(500).send({
+          success: false,
+          message: 'error while fetching buyer states',
+        });
+      }
+    });
+    app.patch(
+      '/approve-submission',
+      verifyToken,
+      verifyBuyer,
+      async (req, res) => {
+        try {
+          const submission = await submissionCollection.findOneAndUpdate(
+            { _id: new ObjectId(req.body.id) },
+            {
+              $set: {
+                status: 'approve',
+              },
+            },
+            { returnDocument: 'after' }
+          );
+          if (submission.status === 'approve') {
+            const user = await usersCollection.findOne({
+              email: submission.worker_email,
+            });
+            if (user) {
+              const userCoins = user.coins;
+              const newCoins = userCoins + submission.payable_amount;
+              await usersCollection.updateOne(
+                { email: submission.worker_email },
+                {
+                  $set: {
+                    coins: newCoins,
+                  },
+                }
+              );
+              res.status(200).send({
+                success: true,
+                data: submission,
+                message: 'submission approved successfully',
+              });
+            }
+          }
+        } catch (error) {
+          console.log(error);
+          res.status(500).send({
+            success: false,
+            message: 'error while approving submission',
+          });
+        }
+      }
+    );
+    app.patch(
+      '/reject-submission',
+      verifyToken,
+      verifyBuyer,
+      async (req, res) => {
+        try {
+          const submission = await submissionCollection.findOneAndUpdate(
+            { _id: new ObjectId(req.body.id) },
+            {
+              $set: {
+                status: 'rejected',
+              },
+            },
+            { returnDocument: 'after' }
+          );
+          if (submission.status === 'rejected') {
+            const tasks = await tasksCollection.findOne({
+              _id: new ObjectId(submission.task_id),
+            });
+            if (tasks) {
+              const remainingWorkers = tasks.required_workers + 1;
+              await tasksCollection.updateOne(
+                { _id: new ObjectId(submission.task_id) },
+                {
+                  $set: {
+                    required_workers: remainingWorkers,
+                  },
+                }
+              );
+              res.status(200).send({
+                success: true,
+                data: submission,
+                message: 'submission rejected successfully',
+              });
+            }
+          }
+        } catch (error) {
+          console.log(error);
+          res.status(500).send({
+            success: false,
+            message: 'error while rejecting submission',
+          });
+        }
+      }
+    );
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
