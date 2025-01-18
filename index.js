@@ -575,6 +575,13 @@ async function run() {
             }
           );
           if (result.modifiedCount > 0) {
+            const notific = await notificationCollection.insertOne({
+              message: `Your withdrawal request of ${req.body.coins} coins has been approved.`,
+              toEmail: req.body.email,
+              actionRoute: '/dashboard/worker-home',
+              time: new Date(),
+            });
+
             const user = await usersCollection.findOne({
               email: req.body.email,
             });
