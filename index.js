@@ -418,7 +418,7 @@ async function run() {
       async (req, res) => {
         try {
           const result = await submissionCollection.insertOne(req.body);
-          if (result.insertedId > 0) {
+          if (result.insertedId) {
             const task = await tasksCollection.findOne({
               _id: new ObjectId(req.body.task_id),
             });
@@ -452,13 +452,22 @@ async function run() {
       verifyWorker,
       async (req, res) => {
         try {
+          const page = req.query?.page;
+          const limit = req.query?.limit;
+          console.log(page, limit, 8999);
           const result = await submissionCollection
+            .find({ worker_email: req.decoded.email })
+            .skip((page - 1) * limit)
+            .limit(parseInt(limit))
+            .toArray();
+          const resultLength = await submissionCollection
             .find({ worker_email: req.decoded.email })
             .toArray();
           console.log(result);
           res.status(200).send({
             success: true,
             data: result,
+            totalPages: Math.ceil(resultLength.length / parseInt(limit)),
             message: 'worker submissions fetched successfully',
           });
         } catch (error) {
@@ -818,6 +827,13 @@ async function run() {
                   },
                 }
               );
+              const notific = await notificationCollection.insertOne({
+                message: `You have earned ${submission.payable_amount} from ${submission.buyer_name} for completing ${submission.task_title}`,
+                toEmail: submission.worker_email,
+                actionRoute: '/dashboard/worker-home',
+                time: new Date(),
+              });
+
               res.status(200).send({
                 success: true,
                 data: submission,
@@ -863,6 +879,13 @@ async function run() {
                   },
                 }
               );
+              const notific = await notificationCollection.insertOne({
+                message: `Your submission for "${submission.task_title}" has been rejected by ${submission.buyer_name}. You may need to revise it.`,
+                toEmail: submission.worker_email,
+                actionRoute: '/dashboard/worker-home',
+                time: new Date(),
+              });
+
               res.status(200).send({
                 success: true,
                 data: submission,
