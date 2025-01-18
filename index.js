@@ -432,8 +432,8 @@ async function run() {
               }
             );
             const notific = await notificationCollection.insertOne({
-              message: `New submission received for your task "${task.title}" from ${req.body.worker_name}.`,
-              toEmail: task.buyer_email,
+              message: `New submission received for your task "${task.task_title}" from ${req.body.worker_name}.`,
+              toEmail: task.buyerEmail,
               actionRoute: '/dashboard/buyer-home',
               time: new Date(),
             });
@@ -987,21 +987,17 @@ async function run() {
         const notifications = await notificationCollection
           .find({ toEmail: req.decoded.email })
           .toArray();
-        res
-          .status(200)
-          .send({
-            success: true,
-            data: notifications,
-            message: 'notifications fetched successfully',
-          });
+        res.status(200).send({
+          success: true,
+          data: notifications,
+          message: 'notifications fetched successfully',
+        });
       } catch (error) {
         console.log(error);
-        res
-          .status(500)
-          .send({
-            success: false,
-            message: 'error while fetching notifications',
-          });
+        res.status(500).send({
+          success: false,
+          message: 'error while fetching notifications',
+        });
       }
     });
   } finally {
