@@ -174,6 +174,7 @@ async function run() {
       try {
         const result = await tasksCollection
           .find({ buyerEmail: req.decoded.email })
+          .sort({ completion_date: -1 })
           .toArray();
         res.status(200).send({
           success: true,
@@ -869,7 +870,7 @@ async function run() {
         const totalSubmitCount = await submissionCollection.countDocuments({
           worker_email: req.decoded.email,
         });
-        const totalPendingSubmit = await submissionPendingTasks
+        const totalPendingSubmit = await submissionCollection
           .aggregate([
             {
               $match: {
@@ -917,7 +918,7 @@ async function run() {
           success: true,
           states: {
             totalSubmitCount,
-            pendingSubmit: submissionPendingTasks,
+            pendingSubmit: pendinSubmitCount,
             totalPayment,
           },
           submissions: submissionPendingSubmit,
