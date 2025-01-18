@@ -418,11 +418,25 @@ async function run() {
       async (req, res) => {
         try {
           const result = await submissionCollection.insertOne(req.body);
-          res.status(200).send({
-            success: true,
-            data: result,
-            message: 'task submission added successfully',
-          });
+          if (result.insertedId > 0) {
+            const task = await tasksCollection.findOne({
+              _id: new ObjectId(req.body.task_id),
+            });
+            const required_workers = task.required_workers - 1;
+            await tasksCollection.updateOne(
+              { _id: new ObjectId(req.body.task_id) },
+              {
+                $set: {
+                  required_workers,
+                },
+              }
+            );
+            res.status(200).send({
+              success: true,
+              data: result,
+              message: 'task submission added successfully',
+            });
+          }
         } catch (error) {
           console.log(error);
           res.status(500).send({
