@@ -431,6 +431,12 @@ async function run() {
                 },
               }
             );
+            const notific = await notificationCollection.insertOne({
+              message: `New submission received for your task "${task.title}" from ${req.body.worker_name}.`,
+              toEmail: task.buyer_email,
+              actionRoute: '/dashboard/buyer-home',
+              time: new Date(),
+            });
             res.status(200).send({
               success: true,
               data: result,
