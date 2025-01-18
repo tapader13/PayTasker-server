@@ -982,6 +982,28 @@ async function run() {
         });
       }
     });
+    app.get('/notifications', verifyToken, async (req, res) => {
+      try {
+        const notifications = await notificationCollection
+          .find({ toEmail: req.decoded.email })
+          .toArray();
+        res
+          .status(200)
+          .send({
+            success: true,
+            data: notifications,
+            message: 'notifications fetched successfully',
+          });
+      } catch (error) {
+        console.log(error);
+        res
+          .status(500)
+          .send({
+            success: false,
+            message: 'error while fetching notifications',
+          });
+      }
+    });
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
