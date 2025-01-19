@@ -33,9 +33,9 @@ const verifyToken = (req, res, next) => {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    // await client.connect();
     // Send a ping to confirm a successful connection
-    await client.db('admin').command({ ping: 1 });
+    // await client.db('admin').command({ ping: 1 });
     console.log(
       'Pinged your deployment. You successfully connected to MongoDB!'
     );
@@ -102,7 +102,7 @@ async function run() {
         if (user) {
           return res.status(200).send({
             success: true,
-            message: 'user already exists',
+            message: 'user logged in successfully',
           });
         }
         const result = await usersCollection.insertOne(req.body);
@@ -841,7 +841,7 @@ async function run() {
                 }
               );
               const notific = await notificationCollection.insertOne({
-                message: `You have earned ${submission.payable_amount} from ${submission.buyer_name} for completing ${submission.task_title}`,
+                message: `You have earned ${submission.payable_amount} coins from ${submission.buyer_name} for completing ${submission.task_title}`,
                 toEmail: submission.worker_email,
                 actionRoute: '/dashboard/worker-home',
                 time: new Date(),
