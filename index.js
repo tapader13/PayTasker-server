@@ -514,12 +514,17 @@ async function run() {
         const totalBuyers = await usersCollection
           .find({ role: 'buyer' })
           .count();
-        const totalPayment = await paymentCollection
+        const totalPayment = await submissionCollection
           .aggregate([
+            {
+              $match: {
+                status: 'approve',
+              },
+            },
             {
               $group: {
                 _id: null,
-                totalPrice: { $sum: '$price' },
+                totalPrice: { $sum: '$payable_amount' },
               },
             },
           ])
@@ -986,6 +991,7 @@ async function run() {
       try {
         const notifications = await notificationCollection
           .find({ toEmail: req.decoded.email })
+          .sort({ time: -1 })
           .toArray();
         res.status(200).send({
           success: true,
