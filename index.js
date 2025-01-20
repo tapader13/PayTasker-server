@@ -713,10 +713,32 @@ async function run() {
       verifyAdmin,
       async (req, res) => {
         try {
+          console.log(req.params.id, 90);
+          // res.send('jghjvm');
+          const task_col = await tasksCollection.findOne({
+            _id: new ObjectId(req.params.id),
+          });
+          console.log(task_col, 123);
           const deleteTask = await tasksCollection.findOneAndDelete({
             _id: new ObjectId(req.params.id),
           });
-          if (deleteTask.deletedCount > 0) {
+          console.log(deleteTask, 321);
+          if (deleteTask) {
+            const users = await usersCollection.findOne({
+              email: task_col.buyerEmail,
+            });
+            console.log(users, 1231);
+            const new_coins =
+              task_col.required_workers * task_col.payable_amount;
+            await usersCollection.updateOne(
+              { email: task_col.buyerEmail },
+              {
+                $set: {
+                  coins: users.coins + new_coins,
+                },
+              }
+            );
+            console.log(new_coins, 7654);
             res.status(200).send({
               success: true,
               data: deleteTask,
