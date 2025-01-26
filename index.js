@@ -11,7 +11,7 @@ const transporter = nodemailer.createTransport({
   secure: false, // true for port 465, false for other ports
   auth: {
     user: 'minhajtapader0@gmail.com',
-    pass: 'kuna foyz oyig jojm',
+    pass: process.env.GOOGLE_PASS,
   },
 });
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
