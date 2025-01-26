@@ -3,6 +3,17 @@ const express = require('express');
 const app = express();
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
+const nodemailer = require('nodemailer');
+
+const transporter = nodemailer.createTransport({
+  host: 'smtp.gmail.com',
+  port: 587,
+  secure: false, // true for port 465, false for other ports
+  auth: {
+    user: 'minhajtapader0@gmail.com',
+    pass: 'kuna foyz oyig jojm',
+  },
+});
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 app.use(cors());
@@ -607,6 +618,24 @@ async function run() {
               }
             );
             if (updateCoins.modifiedCount > 0) {
+              //mail sending to the user
+              const mailOptions = {
+                from: `minhajtapader0@gmail.com`,
+                to: req.body.email,
+                subject: 'Withdrawal Approved',
+                text: 'Withdrawal Approved!',
+                html: `
+    <h1>Withdrawal Approved Successfully</h1>
+    <p>Your withdrawal request of ${req.body.coins} coins has been approved.</p>
+  `,
+              };
+              transporter.sendMail(mailOptions, (error, info) => {
+                if (error) {
+                  console.error('Error sending email:', error);
+                } else {
+                  console.log('Email sent:', info.response);
+                }
+              });
               res.status(200).send({
                 success: true,
                 data: result,
