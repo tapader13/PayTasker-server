@@ -291,8 +291,8 @@ async function run() {
           currency: 'BDT',
           tran_id: trxid,
           success_url: 'http://localhost:5001/success-payment',
-          fail_url: 'http://localhost:5173/fail',
-          cancel_url: 'http://localhost:5173/cancle',
+          fail_url: `http://localhost:5001/fail`,
+          cancel_url: `http://localhost:5001/cancel`,
           ipn_url: 'http://localhost:5001/ipn-success-payment',
           cus_name: 'Customer Name',
           cus_email: `${payment.email}`,
@@ -352,7 +352,7 @@ async function run() {
         { transactionId: data.tran_id },
         {
           $set: {
-            status: 'success',
+            status: 'succeeded',
           },
         }
       );
@@ -374,11 +374,14 @@ async function run() {
       );
 
       // console.log("payment info", payment);
-
+      console.log(data, 'data');
       //step-9: redirect the customer to success page
-      res.redirect('http://localhost:5173/success');
+      res.redirect(`http://localhost:5173/success?id=${data.tran_id}`);
       // console.log(updatePayment, "updatePayment");
       // console.log("isValidPayment", data);
+    });
+    app.post('/cancel', async (req, res) => {
+      res.redirect(`http://localhost:5173/cancel`);
     });
     app.post('/payment', verifyToken, async (req, res) => {
       try {
