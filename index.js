@@ -433,7 +433,7 @@ async function run() {
         });
       }
     });
-    app.get('/tasks-worker', verifyToken, async (req, res) => {
+    app.get('/tasks-worker', async (req, res) => {
       try {
         const result = await tasksCollection
           .aggregate([
